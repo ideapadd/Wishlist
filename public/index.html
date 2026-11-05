@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Birthday Wishlist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a deep wine hero band with the countdown, then a filterable grid of gift cards; each price hangs on a gift tag. */
+:root{
+  --bg:#FAF6F7; --surface:#FFFFFF; --fg:#2B0D16; --muted:#7E626A; --line:#EADCE0;
+  --wine:#6E1229; --wine-2:#8E2440; --wine-ink:#FFF4F6; --wine-soft:#F4E4E8;
+  --accent:#7A1730; --ok:#2F6B4F; --ok-soft:#E3F1EA; --warn-soft:#FBEFD9; --warn:#8A5A12;
+  --display:"Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --body:"Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --shadow:0 1px 2px rgba(60,10,25,.06), 0 8px 24px rgba(60,10,25,.06);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170A0E; --surface:#221116; --fg:#F6E8EC; --muted:#B79AA2; --line:#3A2028;
+  --wine:#4E0B1C; --wine-2:#6E1229; --wine-ink:#FFE9EE; --wine-soft:#341520;
+  --accent:#E07D96; --ok:#8FD1AF; --ok-soft:#173026; --warn-soft:#3A2A10; --warn:#E9C27A;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#170A0E; --surface:#221116; --fg:#F6E8EC; --muted:#B79AA2; --line:#3A2028;
+  --wine:#4E0B1C; --wine-2:#6E1229; --wine-ink:#FFE9EE; --wine-soft:#341520;
+  --accent:#E07D96; --ok:#8FD1AF; --ok-soft:#173026; --warn-soft:#3A2A10; --warn:#E9C27A;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* hero */
+.hero{background:radial-gradient(120% 140% at 85% 0%, var(--wine-2) 0%, var(--wine) 55%);color:var(--wine-ink)}
+.hero .wrap{padding-block:44px 36px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.8;font-weight:600}
+.hero h1{font-family:var(--display);font-weight:600;font-style:italic;font-size:clamp(44px,8vw,84px);line-height:.95;margin:.15em 0 .2em;text-wrap:balance}
+.hero p.msg{max-width:56ch;margin:0;opacity:.9;white-space:pre-line}
+.count{text-align:right;min-width:0}
+.count .num{font-family:var(--display);font-size:clamp(56px,9vw,96px);line-height:.9;font-weight:600;font-variant-numeric:tabular-nums}
+.count .lbl{font-size:13px;opacity:.85}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:13px;opacity:.9}
+.stats b{font-variant-numeric:tabular-nums}
+
+/* toolbar */
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding-block:22px 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:13.5px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--wine);border-color:var(--wine);color:var(--wine-ink)}
+.chip .n{opacity:.6;margin-left:4px;font-variant-numeric:tabular-nums}
+.owner-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--wine);border-color:var(--wine);color:var(--wine-ink)}
+.btn.primary:hover{background:var(--wine-2)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:6px 8px}
+.btn.ghost:hover{color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--wine)}
+
+.note{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--wine-soft);font-size:14px}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;padding-block:18px 40px}
+.seg-title{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;margin-top:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.seg-title h2{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
+.seg-title span{color:var(--muted);font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);min-width:0}
+.ph{position:relative;aspect-ratio:4/3;background:var(--wine-soft);max-width:100%}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--display);font-style:italic;font-size:22px}
+.tag{position:absolute;top:12px;left:0;background:var(--surface);color:var(--fg);padding:6px 14px 6px 22px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;
+  clip-path:polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%);box-shadow:var(--shadow)}
+.tag::before{content:"";position:absolute;left:8px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--wine-soft);box-shadow:inset 0 0 0 1px var(--line)}
+.love{position:absolute;top:12px;right:12px;background:var(--wine);color:var(--wine-ink);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:5px 9px;border-radius:999px}
+.body{padding:14px 16px 12px;display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.body h3{margin:0;font-size:17px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.body .desc{margin:0;color:var(--muted);font-size:14px;overflow-wrap:anywhere;white-space:pre-line}
+.link{color:var(--accent);font-weight:600;font-size:14px;text-decoration:none;width:fit-content}
+.link:hover{text-decoration:underline}
+.foot{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;width:fit-content}
+.status.free{background:var(--wine-soft);color:var(--accent)}
+.status.taken{background:var(--ok-soft);color:var(--ok)}
+.status.group{background:var(--warn-soft);color:var(--warn)}
+.status .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions .btn{padding:7px 12px;font-size:13.5px}
+.mine{font-size:13px;color:var(--ok);font-weight:600}
+.card.is-taken .ph img{filter:saturate(.55)}
+.owner-row{display:flex;gap:4px;justify-content:flex-end;margin-top:-4px}
+
+.emptystate{grid-column:1/-1;text-align:center;padding:56px 16px;border:1.5px dashed var(--line);border-radius:16px;color:var(--muted)}
+.emptystate h2{font-family:var(--display);font-style:italic;font-size:34px;color:var(--fg);margin:0 0 6px;font-weight:600}
+
+.how{border-top:1px solid var(--line);padding-block:24px 48px;color:var(--muted);font-size:13.5px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.how b{color:var(--fg);display:block;margin-bottom:2px}
+
+/* dialogs */
+dialog{border:none;border-radius:18px;padding:0;background:var(--surface);color:var(--fg);width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(30,5,12,.55)}
+.dlg{padding:22px 22px 18px;display:flex;flex-direction:column;gap:14px}
+.dlg h2{margin:0;font-family:var(--display);font-size:30px;font-weight:600}
+.dlg p{margin:0;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;font-weight:600}
+.field input[type=text],.field input[type=url],.field input[type=number],.field input[type=date],.field textarea{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--bg);width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drop{border:1.5px dashed var(--line);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;cursor:pointer;background:var(--bg)}
+.drop.over{border-color:var(--accent)}
+.drop img{width:84px;height:64px;object-fit:cover;border-radius:8px;flex:none}
+.drop .hint{font-size:13px;color:var(--muted)}
+.dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px}
+.err{color:#B3261E;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;z-index:50;max-width:calc(100vw - 32px)}
+@media (max-width:640px){
+  .hero .wrap{grid-template-columns:1fr;padding-block:32px 26px}
+  .count{text-align:left}
+  .row2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .15s ease}.card:hover{transform:translateY(-2px)}}
+
+.admin-link{text-align:center;padding-block:0 32px;margin:0}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:15px}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div style="min-width:0">
+      <div class="eyebrow">Birthday</div>
+      <h1 id="hName">Wishlist</h1>
+      <p class="msg" id="hMsg">Здесь то, что меня порадует. Выберите подарок, и он отметится как занятый, чтобы ничего не повторилось. Ваше имя никто не увидит.</p>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="count" id="countBox" hidden>
+      <div class="num" id="cNum">0</div>
+      <div class="lbl" id="cLbl">дней до дня рождения</div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="bar">
+    <div class="chips" id="chips" role="group" aria-label="Ценовой сегмент"></div>
+    <div class="owner-tools" id="ownerTools" hidden>
+      <label class="toggle" title="Скрыть от себя, какие подарки уже выбрали"><input type="checkbox" id="surprise"> Не подглядывать</label>
+      <button class="btn" id="btnSettings" type="button">Настройки</button>
+      <button class="btn primary" id="btnAdd" type="button">+ Добавить подарок</button>
+    </div>
+  </div>
+  <div id="notice"></div>
+  <section class="grid" id="grid" aria-live="polite">
+    <div class="emptystate"><h2>Загружаем список…</h2><p>Секунду, подарки уже на подходе.</p></div>
+  </section>
+  <footer class="how">
+    <div><b>Выберите подарок</b>Нажмите «Подарю я», и подарок отметится как выбранный для всех.</div>
+    <div><b>Или скиньтесь</b>Дорогой подарок можно взять вместе: нажмите «Скинемся», на карточке будет видно, сколько вас.</div>
+    <div><b>Анонимно</b>Мы не сохраняем, кто выбрал подарок. Отменить свой выбор можно с того же устройства.</div>
+  </footer>
+  <p class="admin-link"><button class="btn ghost" type="button" id="btnLogin">Вход для именинницы</button></p>
+</main>
+
+<dialog id="dlgGift"><form class="dlg" id="giftForm" method="dialog">
+  <h2 id="giftTitle">Новый подарок</h2>
+  <div class="field"><label for="fTitle">Название</label><input type="text" id="fTitle" required maxlength="120" placeholder="Например, аромасвеча с инжиром"></div>
+  <div class="row2">
+    <div class="field"><label for="fPrice">Цена, ₸</label><input type="number" id="fPrice" min="0" step="100" inputmode="numeric" placeholder="25000"></div>
+    <div class="field"><label for="fUrl">Ссылка на магазин</label><input type="url" id="fUrl" placeholder="https://…"></div>
+  </div>
+  <div class="field"><label for="fNote">Комментарий</label><textarea id="fNote" maxlength="400" placeholder="Размер, цвет, модель…"></textarea></div>
+  <div class="field"><label for="fFile">Фото</label>
+    <div class="drop" id="drop" tabindex="0"><img id="fPrev" alt="" hidden><div class="hint" id="dropHint">Нажмите, перетащите файл или вставьте скриншот (Ctrl+V)</div></div>
+    <input type="file" id="fFile" accept="image/*" hidden>
+  </div>
+  <label class="toggle"><input type="checkbox" id="fLove"> Очень хочу</label>
+  <div class="err" id="giftErr"></div>
+  <div class="dlg-actions"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit" id="giftSave">Сохранить</button></div>
+</form></dialog>
+
+<dialog id="dlgSettings"><form class="dlg" id="setForm" method="dialog">
+  <h2>Настройки</h2>
+  <div class="field"><label for="sName">Имя</label><input type="text" id="sName" maxlength="60"></div>
+  <div class="field"><label for="sDate">Дата дня рождения</label><input type="date" id="sDate"></div>
+  <div class="field"><label for="sMsg">Приветствие для друзей</label><textarea id="sMsg" maxlength="500"></textarea></div>
+  <div class="err" id="setErr"></div>
+  <div class="dlg-actions"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit">Сохранить</button></div>
+</form></dialog>
+
+<dialog id="dlgConfirm"><form class="dlg" method="dialog">
+  <h2 id="cfTitle">Подтвердите</h2>
+  <p id="cfText"></p>
+  <div class="dlg-actions"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="button" id="cfOk">Да</button></div>
+</form></dialog>
+
+<dialog id="dlgLogin"><form class="dlg" id="loginForm" method="dialog">
+  <h2>Вход</h2>
+  <p>Режим редактирования только для именинницы.</p>
+  <div class="field"><label for="lPass">Пароль</label><input type="password" id="lPass" autocomplete="current-password" required></div>
+  <div class="err" id="loginErr"></div>
+  <div class="dlg-actions"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit" id="loginBtn">Войти</button></div>
+</form></dialog>
+
+<div class="toast" id="toast" hidden></div>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const TIERS = [
+  {id:'s', name:'Приятные мелочи', label:'до 10 тыс ₸', max:10000},
+  {id:'m', name:'Средние', label:'10–30 тыс ₸', max:30000},
+  {id:'l', name:'Особенные', label:'30–60 тыс ₸', max:60000},
+  {id:'x', name:'Для мажориков', label:'60–100 тыс ₸', max:100000},
+  {id:'xx', name:'Большая мечта', label:'от 100 тыс ₸', max:Infinity, extra:true},
+];
+const tierOf = p => TIERS.find(t => (Number(p)||0) <= t.max) || TIERS[TIERS.length-1];
+const tierG = g => TIERS.find(t => t.id === g.tier) || tierOf(g.price);
+const fmt = n => new Intl.NumberFormat('ru-RU').format(Math.round(n)) + ' ₸';
+const plural = (n, a, b, c) => { const m10=n%10, m100=n%100; return m10===1&&m100!==11?a:(m10>=2&&m10<=4&&(m100<10||m100>=20)?b:c); };
+
+const S = { gifts:[], pledges:[], settings:null, loaded:{g:false,p:false}, isOwner:false, canWrite:null, filter:'all', surprise:false, db:null, assets:null, offline:false, setupError:'' };
+try { S.surprise = localStorage.getItem('wl-surprise') === '1'; } catch {}
+$('surprise').checked = S.surprise;
+
+/* local keys that let this browser cancel its own anonymous pledges */
+function getKeys(){ try { return JSON.parse(localStorage.getItem('wl-keys')||'{}'); } catch { return {}; } }
+function setKey(id,k){ const o=getKeys(); if(k) o[id]=k; else delete o[id]; try{ localStorage.setItem('wl-keys', JSON.stringify(o)); }catch{} }
+const rand = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b=>b.toString(16).padStart(2,'0')).join('');
+async function hash(s){
+  try { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(d), b=>b.toString(16).padStart(2,'0')).join(''); }
+  catch { let h=0; for (const c of s) h=(h*31+c.charCodeAt(0))|0; return 'x'+h; }
+}
+const myHashes = {}; // pledgeId -> hash of my key
+async function refreshMine(){
+  const keys = getKeys();
+  for (const id of Object.keys(keys)) if (!myHashes[id]) myHashes[id] = await hash(keys[id]);
+}
+const isMine = p => myHashes[p.id] && myHashes[p.id] === p.keyHash;
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true, 3200); }
+function h(tag, attrs={}, ...kids){
+  const el=document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) { if (v==null||v===false) continue; if (k==='class') el.className=v; else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v===true?'':v); }
+  for (const k of kids.flat()) if (k!=null && k!==false) el.append(k.nodeType?k:document.createTextNode(String(k)));
+  return el;
+}
+const safeUrl = u => { try { const x=new URL(u); return /^https?:$/.test(x.protocol) ? x.href : null; } catch { return null; } };
+const host = u => { try { return new URL(u).hostname.replace(/^www\./,''); } catch { return ''; } };
+
+/* ---------- derived ---------- */
+function pledgesFor(gid){ return S.pledges.filter(p => p.giftId === gid); }
+function statusOf(gid){
+  const ps = pledgesFor(gid);
+  if (ps.some(p => p.mode==='solo')) return {kind:'taken', ps};
+  const g = ps.filter(p => p.mode==='group');
+  return g.length ? {kind:'group', ps, n:g.length} : {kind:'free', ps};
+}
+const hideStatus = () => S.isOwner && S.surprise;
+
+/* ---------- render ---------- */
+function renderHero(){
+  const st = S.settings || {};
+  $('hName').textContent = st.name || 'Wishlist';
+  if (st.message) $('hMsg').textContent = st.message;
+  const box = $('countBox');
+  if (st.date && /^\d{4}-\d{2}-\d{2}$/.test(st.date)) {
+    const [,m,d] = st.date.split('-').map(Number);
+    const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let next = new Date(now.getFullYear(), m-1, d); if (next < today) next = new Date(now.getFullYear()+1, m-1, d);
+    const days = Math.round((next - today)/864e5);
+    box.hidden = false;
+    $('cNum').textContent = days;
+    $('cLbl').textContent = days === 0 ? 'Сегодня день рождения!' : plural(days,'день','дня','дней') + ' до дня рождения · ' + next.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+  } else box.hidden = true;
+  const total = S.gifts.length;
+  const chosen = S.gifts.filter(g => statusOf(g.id).kind !== 'free').length;
+  const stats = $('stats'); stats.replaceChildren();
+  if (total) {
+    stats.append(h('span',{}, h('b',{}, total), ' ' + plural(total,'подарок','подарка','подарков') + ' в списке'));
+    if (!hideStatus()) stats.append(h('span',{}, h('b',{}, chosen), ' уже ' + plural(chosen,'выбран','выбрано','выбрано') + ', ', h('b',{}, total-chosen), ' свободно'));
+  }
+}
+function renderChips(){
+  const c = $('chips'); c.replaceChildren();
+  const mk = (id, label, n) => h('button',{class:'chip',type:'button','aria-pressed':String(S.filter===id),onclick:()=>{S.filter=id;render();}}, label, h('span',{class:'n'}, n));
+  c.append(mk('all','Все', S.gifts.length));
+  for (const t of TIERS) { const n = S.gifts.filter(g => tierG(g).id===t.id).length; if (n || (S.isOwner && !t.extra)) c.append(mk(t.id, t.label, n)); }
+}
+function renderNotice(){
+  const n = $('notice'); n.replaceChildren();
+  if (S.setupError) n.append(h('div',{class:'note warn'}, S.setupError));
+  else if (S.offline) n.append(h('div',{class:'note warn'}, 'Не получается загрузить список. Проверьте интернет: страница обновится сама, как только связь появится.'));
+    else if (S.isOwner) n.append(h('div',{class:'note'}, 'Это ваш режим редактирования, друзья видят список без этих кнопок. Чтобы поделиться, отправьте друзьям ссылку на этот сайт. ', h('button',{class:'btn ghost',type:'button',onclick:logout}, 'Выйти')));
+}
+function card(g){
+  const st = statusOf(g.id), hide = hideStatus();
+  const img = g.imageUrl || (g.imageId ? '/_blob/' + g.imageId : null);
+  const url = safeUrl(g.url||'');
+  const mine = st.ps.filter(isMine);
+  const ph = h('div',{class:'ph'},
+    img ? h('img',{src:img, alt:g.title||'', loading:'lazy'}) : h('div',{class:'empty'}, 'без фото'),
+    g.price ? h('div',{class:'tag'}, fmt(g.price)) : null,
+    g.love ? h('div',{class:'love'}, 'Очень хочу') : null);
+  const body = h('div',{class:'body'},
+    S.isOwner ? h('div',{class:'owner-row'},
+      h('button',{class:'btn ghost',type:'button',onclick:()=>openGift(g)}, 'Изменить'),
+      h('button',{class:'btn ghost',type:'button',onclick:()=>removeGift(g)}, 'Удалить')) : null,
+    h('h3',{}, g.title || 'Без названия'),
+    g.note ? h('p',{class:'desc'}, g.note) : null,
+    url ? h('a',{class:'link',href:url,target:'_blank',rel:'noopener noreferrer'}, 'Где купить · ' + host(url) + ' ↗') : null,
+    safeUrl(g.url2||'') ? h('a',{class:'link',href:safeUrl(g.url2),target:'_blank',rel:'noopener noreferrer'}, 'Ещё вариант · ' + host(g.url2) + ' ↗') : null);
+  const foot = h('div',{class:'foot'});
+  if (!hide) {
+    if (st.kind==='free') foot.append(h('span',{class:'status free'}, h('span',{class:'dot'}), 'Свободен'));
+    if (st.kind==='taken') foot.append(h('span',{class:'status taken'}, h('span',{class:'dot'}), 'Уже выбран'));
+    if (st.kind==='group') foot.append(h('span',{class:'status group'}, h('span',{class:'dot'}), 'Скидываются: ' + st.n + ' ' + plural(st.n,'человек','человека','человек')));
+    if (mine.length) foot.append(h('span',{class:'mine'}, mine[0].mode==='solo' ? 'Это ваш выбор' : 'Вы участвуете'));
+    const acts = h('div',{class:'actions'});
+    const can = S.loaded.g && !S.isOwner;
+    if (can) {
+      if (st.kind==='free') { acts.append(h('button',{class:'btn primary',type:'button',onclick:()=>claim(g,'solo')}, 'Подарю я'), h('button',{class:'btn',type:'button',onclick:()=>claim(g,'group')}, 'Скинемся')); }
+      if (st.kind==='group' && !mine.length) acts.append(h('button',{class:'btn',type:'button',onclick:()=>claim(g,'group')}, 'Присоединиться'));
+      if (mine.length) acts.append(h('button',{class:'btn ghost',type:'button',onclick:()=>cancel(g, mine)}, 'Отменить мой выбор'));
+    }
+    if (S.isOwner && st.kind!=='free') acts.append(h('button',{class:'btn ghost',type:'button',onclick:()=>clearPledges(g)}, 'Снять отметку'));
+    if (acts.childNodes.length) foot.append(acts);
+  } else foot.append(h('span',{class:'status free'}, 'Сюрприз: статус скрыт'));
+  return h('article',{class:'card' + (!hide && st.kind==='taken' ? ' is-taken':'')}, ph, body, foot);
+}
+function renderGrid(){
+  const grid = $('grid'); grid.replaceChildren();
+  if (!S.loaded.g) {
+    grid.append(h('div',{class:'emptystate'}, h('h2',{}, S.setupError||S.offline ? 'Список недоступен' : 'Загружаем список…'), h('p',{}, 'Секунду, подарки уже на подходе.')));
+    return;
+  }
+  if (!S.gifts.length) {
+    grid.append(h('div',{class:'emptystate'}, h('h2',{}, 'Список пока пуст'),
+      h('p',{}, S.isOwner ? 'Добавьте первый подарок: название, цену, ссылку и фото. Он сам попадёт в нужный ценовой сегмент.' : 'Именинница ещё добавляет подарки. Загляните чуть позже.'),
+      S.isOwner ? h('p',{}, h('button',{class:'btn primary',type:'button',onclick:()=>openGift()}, '+ Добавить подарок')) : null));
+    return;
+  }
+  const rank = g => g.top ? 1 : g.last ? -1 : 0;
+  const sorted = [...S.gifts].sort((a,b)=>(rank(b)-rank(a)) || (Number(a.price)||0)-(Number(b.price)||0));
+  for (const t of TIERS) {
+    if (S.filter!=='all' && S.filter!==t.id) continue;
+    const items = sorted.filter(g => tierG(g).id===t.id);
+    if (!items.length) continue;
+    const free = items.filter(g=>statusOf(g.id).kind==='free').length;
+    grid.append(h('div',{class:'seg-title'}, h('h2',{}, t.name), h('span',{}, t.label + (hideStatus() ? '' : ' · свободно ' + free + ' из ' + items.length))));
+    items.forEach(g => grid.append(card(g)));
+  }
+  if (!grid.childNodes.length) grid.append(h('div',{class:'emptystate'}, h('p',{}, 'В этом сегменте пока ничего нет.')));
+}
+function render(){ renderHero(); renderChips(); renderNotice(); renderGrid(); $('ownerTools').hidden = !S.isOwner; }
+
+/* ---------- confirm ---------- */
+function ask(title, text, okLabel){
+  return new Promise(res => {
+    const d=$('dlgConfirm'); $('cfTitle').textContent=title; $('cfText').textContent=text; $('cfOk').textContent=okLabel||'Да';
+    const done = v => { d.close(); $('cfOk').onclick=null; res(v); };
+    $('cfOk').onclick=()=>done(true); d.onclose=()=>res(false);
+    d.showModal();
+  });
+}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
+
+/* ---------- API ---------- */
+let adminPass = '';
+try { adminPass = sessionStorage.getItem('wl-admin') || localStorage.getItem('wl-admin') || ''; } catch {}
+async function api(path, body, admin){
+  const opts = body ? { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) } : { cache:'no-store' };
+  if (admin) opts.headers = { ...(opts.headers||{}), 'x-admin-password': adminPass };
+  const r = await fetch('/api/' + path, opts);
+  let j = {}; try { j = await r.json(); } catch {}
+  if (!r.ok) { const e = new Error(j.error || 'HTTP ' + r.status); e.code = j.code || r.status; throw e; }
+  return j;
+}
+async function load(){
+  try {
+    const s = await api('state');
+    S.gifts = s.gifts; S.pledges = s.pledges; S.settings = s.settings;
+    S.loaded.g = true; S.offline = false; S.setupError = '';
+    await refreshMine();
+  } catch (e) {
+    if (e.code === 'not_configured') S.setupError = 'Сайт ещё не подключён к хранилищу. Именинница скоро всё настроит.';
+    else S.offline = true;
+  }
+  render();
+}
+
+/* ---------- friends: pledges ---------- */
+async function claim(g, mode){
+  const ok = await ask(mode==='solo' ? 'Вы дарите этот подарок?' : 'Скинуться на подарок?',
+    (mode==='solo' ? '«'+g.title+'» отметится как выбранный, и другие его не возьмут.' : 'На карточке будет видно, сколько человек скидываются на «'+g.title+'».') + ' Ваше имя не сохраняется.',
+    mode==='solo' ? 'Подарю я' : 'Скинемся');
+  if (!ok) return;
+  try {
+    const key = rand(), keyHash = await hash(key);
+    const r = await api('pledge', {action:'claim', giftId:g.id, mode, keyHash});
+    setKey(r.id, key); myHashes[r.id] = keyHash;
+    toast(mode==='solo' ? 'Готово! Подарок отмечен как выбранный.' : 'Готово! Вы в деле.');
+  } catch (e) {
+    if (e.code==='taken') toast('Этот подарок уже выбрали, посмотрите другие.');
+    else if (e.code==='group') toast('На этот подарок уже скидываются, присоединяйтесь.');
+    else writeFail(e);
+  }
+  load();
+}
+async function cancel(g, mine){
+  if (!await ask('Отменить выбор?', 'Подарок «'+g.title+'» снова станет свободным для других.', 'Отменить выбор')) return;
+  try { const keys = getKeys(); for (const p of mine) { await api('pledge', {action:'cancel', id:p.id, key:keys[p.id]}); setKey(p.id, null); delete myHashes[p.id]; } toast('Выбор отменён.'); }
+  catch (e) { writeFail(e); }
+  load();
+}
+async function clearPledges(g){
+  if (!await ask('Снять отметку?', 'Все отметки на «'+g.title+'» будут удалены, подарок снова станет свободным.', 'Снять')) return;
+  try { await api('admin', {action:'clearPledges', giftId:g.id}, true); toast('Отметка снята.'); } catch (e) { writeFail(e); }
+  load();
+}
+function writeFail(e){
+  if (e && e.code==='unauthorized') { logout(); return toast('Пароль не подошёл, войдите заново.'); }
+  if (e && e.code==='not_configured') return toast('Сайт ещё не подключён к хранилищу.');
+  toast('Не получилось сохранить. Попробуйте ещё раз.');
+}
+
+/* ---------- owner: login ---------- */
+function logout(){ adminPass=''; try{ sessionStorage.removeItem('wl-admin'); localStorage.removeItem('wl-admin'); }catch{} S.isOwner=false; render(); }
+$('btnLogin').addEventListener('click',()=>{ $('lPass').value=''; $('loginErr').textContent=''; $('dlgLogin').showModal(); });
+$('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  adminPass = $('lPass').value;
+  try { await api('admin', {action:'check'}, true); try{ localStorage.setItem('wl-admin', adminPass); }catch{} S.isOwner=true; $('dlgLogin').close(); render(); toast('Вы вошли как именинница.'); }
+  catch (err) { adminPass=''; $('loginErr').textContent = err.code==='unauthorized' ? 'Неверный пароль.' : err.code==='no_password' ? 'Пароль ещё не задан в настройках Vercel (ADMIN_PASSWORD).' : 'Не получилось войти. Попробуйте ещё раз.'; }
+});
+
+/* ---------- owner: gifts ---------- */
+let editing = null, pendingFile = null;
+function setPreview(src){ const p=$('fPrev'); if (src) { p.src=src; p.hidden=false; $('dropHint').textContent='Нажмите, чтобы заменить фото'; } else { p.hidden=true; p.removeAttribute('src'); $('dropHint').textContent='Нажмите, перетащите файл или вставьте скриншот (Ctrl+V)'; } }
+function openGift(g){
+  editing = g || null; pendingFile = null; $('giftErr').textContent='';
+  $('giftTitle').textContent = g ? 'Изменить подарок' : 'Новый подарок';
+  $('fTitle').value = g?.title||''; $('fPrice').value = g?.price || ''; $('fUrl').value = g?.url||''; $('fNote').value = g?.note||''; $('fLove').checked = !!g?.love;
+  setPreview(g ? g.imageUrl : null);
+  $('dlgGift').showModal();
+}
+function takeFile(f){ if (!f || !f.type.startsWith('image/')) return; pendingFile=f; setPreview(URL.createObjectURL(f)); }
+$('drop').addEventListener('click',()=>$('fFile').click());
+$('drop').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();$('fFile').click();} });
+$('fFile').addEventListener('change',e=>takeFile(e.target.files[0]));
+$('drop').addEventListener('dragover',e=>{e.preventDefault();$('drop').classList.add('over');});
+$('drop').addEventListener('dragleave',()=>$('drop').classList.remove('over'));
+$('drop').addEventListener('drop',e=>{e.preventDefault();$('drop').classList.remove('over');takeFile(e.dataTransfer.files[0]);});
+$('dlgGift').addEventListener('paste',e=>{ const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/')); if(it){ e.preventDefault(); takeFile(it.getAsFile()); } });
+
+function shrinkToDataUrl(file){
+  return new Promise((res, rej)=>{
+    const img=new Image(); img.onload=()=>{
+      const k=Math.min(1,1200/Math.max(img.width,img.height)); const c=document.createElement('canvas');
+      c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+      const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',.84));
+    }; img.onerror=()=>rej(new Error('bad image')); img.src=URL.createObjectURL(file);
+  });
+}
+$('giftForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const title=$('fTitle').value.trim(); if(!title){ $('giftErr').textContent='Укажите название подарка.'; return; }
+  let url=$('fUrl').value.trim(); if (url && !/^https?:\/\//i.test(url)) url='https://'+url;
+  if (url && !safeUrl(url)) { $('giftErr').textContent='Ссылка выглядит неправильно. Скопируйте её из адресной строки магазина.'; return; }
+  const btn=$('giftSave'); btn.disabled=true; btn.textContent='Сохраняем…';
+  try {
+    const data = { title, price: Math.max(0, Number($('fPrice').value)||0), url, note:$('fNote').value.trim(), love:$('fLove').checked,
+      url2: editing?.url2||'', top: !!editing?.top, last: !!editing?.last, tier: editing?.tier||'', imageUrl: editing?.imageUrl||null, createdAt: editing?.createdAt||Date.now() };
+    let oldUrl=null;
+    if (pendingFile) {
+      const dataUrl = await shrinkToDataUrl(pendingFile);
+      const up = await api('admin', {action:'uploadImage', dataUrl}, true);
+      oldUrl = data.imageUrl; data.imageUrl = up.url;
+    }
+    await api('admin', {action:'saveGift', id: editing?.id, data}, true);
+    if (oldUrl) api('admin', {action:'deleteImage', url: oldUrl}, true).catch(()=>{});
+    $('dlgGift').close(); toast(editing ? 'Подарок обновлён.' : 'Подарок добавлен.');
+    load();
+  } catch(err) {
+    if (err?.code==='unauthorized') { $('dlgGift').close(); writeFail(err); }
+    else $('giftErr').textContent = err?.code==='too_large' ? 'Фото слишком большое, попробуйте другое.' : err?.message==='bad image' ? 'Не получилось прочитать фото, попробуйте JPG или PNG.' : 'Не получилось сохранить. Попробуйте ещё раз.';
+  } finally { btn.disabled=false; btn.textContent='Сохранить'; }
+});
+async function removeGift(g){
+  if (!await ask('Удалить подарок?', '«'+g.title+'» исчезнет из списка вместе с отметками друзей.', 'Удалить')) return;
+  try { await api('admin', {action:'deleteGift', id:g.id}, true); toast('Подарок удалён.'); } catch(e){ writeFail(e); }
+  load();
+}
+$('btnAdd').addEventListener('click',()=>openGift());
+$('btnSettings').addEventListener('click',()=>{ const s=S.settings||{}; $('sName').value=s.name||''; $('sDate').value=s.date||''; $('sMsg').value=s.message||$('hMsg').textContent; $('setErr').textContent=''; $('dlgSettings').showModal(); });
+$('setForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  try { await api('admin', {action:'saveSettings', settings:{ name:$('sName').value.trim(), date:$('sDate').value||'', message:$('sMsg').value.trim() }}, true); $('dlgSettings').close(); toast('Сохранено.'); load(); }
+  catch (err) { if (err?.code==='unauthorized') { $('dlgSettings').close(); writeFail(err); } else $('setErr').textContent='Не получилось сохранить. Попробуйте ещё раз.'; }
+});
+$('surprise').addEventListener('change',e=>{ S.surprise=e.target.checked; try{localStorage.setItem('wl-surprise', S.surprise?'1':'0');}catch{} render(); });
+
+/* ---------- boot ---------- */
+render();
+(async () => {
+  if (adminPass) { try { await api('admin', {action:'check'}, true); S.isOwner = true; } catch { logout(); } }
+  await load();
+  setInterval(() => { if (!document.hidden && !document.querySelector('dialog[open]')) load(); }, 20000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+})();
+})();
+</script>
+</body>
+</html>
